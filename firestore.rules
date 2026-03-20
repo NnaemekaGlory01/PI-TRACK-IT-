@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: businesses
+    // Fields: name, address, contact, licenseNumber, taxId, logoUrl, ownerUid, country, state, lga, subscriptionPlan, subscriptionExpiry
+    //
+    // Collection: products
+    // Fields: name, category, barcode, supplier, costPrice, sellingPrice, totalQuantity, dosageForm, safetyStock, packSize, isPack, salesOnReturn, businessId
+    //
+    // Collection: batches
+    // Fields: productId, batchNumber, manufacturingDate, expirationDate, quantity, businessId
+    //
+    // Collection: sales
+    // Fields: items, total, discount, paymentMethod, timestamp, staffUid, businessId, customerDetails, changeAmount
+    //
+    // Collection: expenses
+    // Fields: type, category, amount, description, timestamp, businessId
+    //
+    // Collection: users
+    // Fields: name, email, role, businessId
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin') || (request.auth.token.email == "nnaemekagloryebuka@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function belongsToBusiness(businessId) {
+      return isAuthenticated() && getUserData().businessId == businessId;
+    }
+
+    function isValidBusiness(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.ownerUid == request.auth.uid;
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.category is string &&
+             data.sellingPrice is number && data.sellingPrice >= 0 &&
+             data.businessId is string;
+    }
+
+    function isValidBatch(data) {
+      return data.productId is string &&
+             data.batchNumber is string &&
+             data.expirationDate is string &&
+             data.quantity is number &&
+             data.businessId is string;
+    }
+
+    function isValidSale(data) {
+      return data.items is list &&
+             data.total is number &&
+             data.staffUid == request.auth.uid &&
+             data.businessId is string;
+    }
+
+    function isValidExpense(data) {
+      return data.type in ['income', 'expense'] &&
+             data.amount is number &&
+             data.businessId is string;
+    }
+
+    function isValidUser(data) {
+      return data.email is string && data.email.size() < 100 &&
+             data.role in ['admin', 'staff', 'viewer'] &&
+             (!('name' in data) || (data.name is string && data.name.size() < 100)) &&
+             (!('businessId' in data) || (data.businessId is string));
+    }
+
+    function roleUnchanged() {
+      return !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /businesses/{businessId} {
+      allow read: if belongsToBusiness(businessId);
+      allow create: if isAuthenticated() && isValidBusiness(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.ownerUid) && isValidBusiness(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if belongsToBusiness(resource.data.businessId);
+      allow create: if isAuthenticated() && isValidProduct(request.resource.data) && belongsToBusiness(request.resource.data.businessId);
+      allow update: if isAuthenticated() && belongsToBusiness(resource.data.businessId) && isValidProduct(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /batches/{batchId} {
+      allow read: if belongsToBusiness(resource.data.businessId);
+      allow create: if isAuthenticated() && isValidBatch(request.resource.data) && belongsToBusiness(request.resource.data.businessId);
+      allow update: if isAuthenticated() && belongsToBusiness(resource.data.businessId) && isValidBatch(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow read: if belongsToBusiness(resource.data.businessId);
+      allow create: if isAuthenticated() && isValidSale(request.resource.data) && belongsToBusiness(request.resource.data.businessId);
+      allow update: if false; // Sales should be immutable for audit
+      allow delete: if isAdmin();
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if belongsToBusiness(resource.data.businessId);
+      allow create: if isAuthenticated() && isValidExpense(request.resource.data) && belongsToBusiness(request.resource.data.businessId);
+      allow update: if isAuthenticated() && belongsToBusiness(resource.data.businessId) && isValidExpense(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
+      allow update: if isAuthenticated() && (isAdmin() || (isOwner(userId) && roleUnchanged())) && isValidUser(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "entities": {
+    "Business": {
+      "title": "Business",
+      "description": "Details about the FMCG business or pharmacy.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "contact": { "type": "string" },
+        "licenseNumber": { "type": "string" },
+        "taxId": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "ownerUid": { "type": "string" },
+        "country": { "type": "string" },
+        "state": { "type": "string" },
+        "lga": { "type": "string" },
+        "subscriptionPlan": { "type": "string", "enum": ["free", "basic", "premium"] },
+        "subscriptionExpiry": { "type": "string", "format": "date" },
+        "receiptCompanyName": { "type": "string" },
+        "receiptMotto": { "type": "string" },
+        "receiptTagline": { "type": "string" }
+      },
+      "required": ["name", "ownerUid"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "General product information.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "barcode": { "type": "string" },
+        "supplier": { "type": "string" },
+        "costPrice": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "totalQuantity": { "type": "number" },
+        "dosageForm": { "type": "string" },
+        "safetyStock": { "type": "number" },
+        "packSize": { "type": "number" },
+        "isPack": { "type": "boolean" },
+        "salesOnReturn": { "type": "boolean" },
+        "businessId": { "type": "string" }
+      },
+      "required": ["name", "category", "sellingPrice", "businessId"]
+    },
+    "Batch": {
+      "title": "Batch",
+      "description": "Specific batch of a product with expiration tracking.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "manufacturingDate": { "type": "string", "format": "date" },
+        "expirationDate": { "type": "string", "format": "date" },
+        "quantity": { "type": "number" },
+        "businessId": { "type": "string" }
+      },
+      "required": ["productId", "batchNumber", "expirationDate", "quantity", "businessId"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Record of a sales transaction.",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "name": { "type": "string" },
+              "quantity": { "type": "number" },
+              "price": { "type": "number" },
+              "batchId": { "type": "string" }
+            }
+          }
+        },
+        "total": { "type": "number" },
+        "discount": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "pos", "transfer", "credit"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "staffUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "customerDetails": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "phone": { "type": "string" },
+            "amountOwed": { "type": "number" }
+          }
+        },
+        "changeAmount": { "type": "number" }
+      },
+      "required": ["items", "total", "timestamp", "staffUid", "businessId"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Record of income or expenses.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "businessId": { "type": "string" }
+      },
+      "required": ["type", "amount", "timestamp", "businessId"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Application user with role-based access.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff", "viewer"] },
+        "businessId": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "businesses": { "schema": "Business", "description": "Collection of businesses" },
+    "products": { "schema": "Product", "description": "Collection of products" },
+    "batches": { "schema": "Batch", "description": "Collection of product batches" },
+    "sales": { "schema": "Sale", "description": "Collection of sales records" },
+    "expenses": { "schema": "Expense", "description": "Collection of income and expenses" },
+    "users": { "schema": "User", "description": "Collection of app users" }
+  }
+}
