@@ -119,6 +119,34 @@
         "businessId": { "type": "string" }
       },
       "required": ["email", "role"]
+    },
+    "InventoryAdjustment": {
+      "title": "Inventory Adjustment",
+      "description": "Log of manual stock adjustments.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "delta": { "type": "number" },
+        "reason": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "businessId": { "type": "string" }
+      },
+      "required": ["productId", "delta", "reason", "timestamp", "businessId"]
+    },
+    "CreditLedgerEntry": {
+      "title": "Credit Ledger Entry",
+      "description": "Record of credit payments and balances.",
+      "type": "object",
+      "properties": {
+        "saleId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "amountPaid": { "type": "number" },
+        "remainingBalance": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "businessId": { "type": "string" }
+      },
+      "required": ["saleId", "amountPaid", "remainingBalance", "timestamp", "businessId"]
     }
   },
   "firestore": {
@@ -127,6 +155,8 @@
     "batches": { "schema": "Batch", "description": "Collection of product batches" },
     "sales": { "schema": "Sale", "description": "Collection of sales records" },
     "expenses": { "schema": "Expense", "description": "Collection of income and expenses" },
-    "users": { "schema": "User", "description": "Collection of app users" }
+    "users": { "schema": "User", "description": "Collection of app users" },
+    "inventory_adjustments": { "schema": "InventoryAdjustment", "description": "Log of stock adjustments" },
+    "credit_ledger": { "schema": "CreditLedgerEntry", "description": "Log of credit payments" }
   }
 }

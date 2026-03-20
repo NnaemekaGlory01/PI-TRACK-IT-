@@ -27,6 +27,7 @@ export interface Business {
   receiptCompanyName?: string;
   receiptMotto?: string;
   receiptTagline?: string;
+  useBrowserPrint?: boolean;
 }
 
 export interface Product {
@@ -45,6 +46,10 @@ export interface Product {
   sellType: 'single' | 'pack_piece';
   piecesPerPack?: number;
   sellingPricePerPiece?: number;
+  isControlled?: boolean;
+  mechanismOfAction?: string;
+  drugClass?: string;
+  indication?: string;
 }
 
 export interface Batch {
@@ -55,6 +60,7 @@ export interface Batch {
   expirationDate: string;
   quantity: number;
   businessId: string;
+  dateReceived: string;
 }
 
 export interface SaleItem {
@@ -80,7 +86,31 @@ export interface Sale {
     phone: string;
     amountOwed: number;
   };
+  prescriberInfo?: {
+    name: string;
+    hospital: string;
+    licenseNumber?: string;
+    prescriptionDate?: string;
+  };
   changeAmount?: number;
+}
+
+export interface CreditLedgerEntry {
+  id: string;
+  saleId: string;
+  customerName: string;
+  customerPhone: string;
+  totalAmount: number;
+  amountOwed: number;
+  status: 'pending' | 'resolved';
+  timestamp: any;
+  businessId: string;
+  items: SaleItem[];
+  payments: {
+    amount: number;
+    date: any;
+    note?: string;
+  }[];
 }
 
 export interface Expense {
